@@ -1,0 +1,60 @@
+services:
+  postgres: 
+    image: postgres:15.17-trixie
+    container_name: postgres
+    environment: 
+      - POSTGRES_DB=appdb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=/run/secrets/my_db_password
+    volumes:
+      - postgre_data:/var/lib/postgresql/data
+      - ./secrets/my_db_password:/run/secrets/my_db_password:ro
+    networks:
+      - rajpal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d appdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    volumes:
+      - redis_data:/data
+    networks:
+      - rajpal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  python-app:
+    build: .  
+    container_name: python-app
+    init: true
+    environment:
+      - DB_HOST=postgres
+      - DB_NAME=appdb
+      - DB_USER=postgres
+      - DB_PASSWORD_FILE=/run/secrets/my_db_password
+      - REDIS_HOST=redis
+    networks:
+      - rajpal
+    volumes:
+      - ./secrets/my_db_password:/run/secrets/my_db_password:ro
+    ports:
+      - 5000:5000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+networks:
+  rajpal:
+volumes:
+  postgre_data:
+  redis_data:

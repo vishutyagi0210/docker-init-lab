@@ -204,26 +204,7 @@ passed — critical for proper signal handling in all scenarios.
 
 ---
 
-## Section 6: Production Tip — STOPSIGNAL
-
-You can define which signal Docker sends to your container on shutdown using the
-`STOPSIGNAL` directive in your Dockerfile:
-
-```dockerfile
-STOPSIGNAL SIGTERM
-```
-
-This pairs well with `tini` — `tini` receives the signal and forwards it
-correctly to your application. Some applications (e.g., certain Java or Node.js
-apps) respond better to `SIGINT` instead:
-
-```dockerfile
-STOPSIGNAL SIGINT
-```
-
----
-
-## Section 7: A Note on Kubernetes
+## Section 6: A Note on Kubernetes
 
 In **Kubernetes**, proper signal handling becomes even more critical. When a Pod
 is terminated, Kubernetes sends `SIGTERM` to PID 1 and waits for

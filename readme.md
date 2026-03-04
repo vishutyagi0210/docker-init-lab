@@ -18,15 +18,15 @@ To solve this problem, we can use **`tini`**, which acts as a lightweight
 
 Run the application containers using Docker Compose:
 
-\```bash
+```bash
 docker compose up
-\```
+```
 
 Now stop the containers:
 
-\```bash
+```bash
 docker compose down
-\```
+```
 
 You may notice that the application container **does not stop immediately**.
 
@@ -44,21 +44,21 @@ container may not properly handle the `SIGTERM` signal.
 To inspect what process is running inside the container, first enter the
 container shell:
 
-\```bash
+```bash
 # Enter the container shell
 docker exec -it <container_name> bash
-\```
+```
 
 Once inside the container, install the required tools and check running
 processes:
 
-\```bash
+```bash
 # Inside the container:
 apt-get update && apt-get install -y procps
 
 # Verify running processes
 ps aux
-\```
+```
 
 You will observe that the application process is running as **PID 1**.
 
@@ -90,12 +90,12 @@ Install `tini` directly in the Docker image and configure it as the entrypoint.
 This method bundles `tini` inside your image — useful for portability and when
 you want full control over the version used.
 
-\```dockerfile
+```dockerfile
 RUN apt-get update && apt-get install -y tini
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["python", "app.py"]
-\```
+```
 
 ---
 
@@ -104,12 +104,12 @@ CMD ["python", "app.py"]
 Docker provides built-in support for `tini` via the `init` key in
 `docker-compose.yml`.
 
-\```yaml
+```yaml
 services:
   python-app:
     build: .
     init: true
-\```
+```
 
 > **Note:** This uses the **tini binary bundled with the Docker daemon itself** —
 > you do not need to install `tini` inside your image. Docker injects it
@@ -121,9 +121,9 @@ services:
 
 If you are starting containers manually, enable `tini` using the `--init` flag:
 
-\```bash
+```bash
 docker run --init my-image
-\```
+```
 
 > **Note:** Same as Method 2 — uses Docker's **bundled tini binary**.
 > No image-level installation required.
@@ -176,28 +176,28 @@ different purposes.
 
 ### Example Dockerfile
 
-\```dockerfile
+```dockerfile
 ENTRYPOINT ["tini", "--"]
 CMD ["python", "app.py"]
-\```
+```
 
 Docker internally runs this as:
 
-\```bash
+```bash
 tini -- python app.py
-\```
+```
 
 If a user overrides the command at runtime:
 
-\```bash
+```bash
 docker run my-image python worker.py
-\```
+```
 
 The container will run:
 
-\```bash
+```bash
 tini -- python worker.py
-\```
+```
 
 This ensures **`tini` always remains PID 1**, regardless of what command is
 passed — critical for proper signal handling in all scenarios.
@@ -209,17 +209,17 @@ passed — critical for proper signal handling in all scenarios.
 You can define which signal Docker sends to your container on shutdown using the
 `STOPSIGNAL` directive in your Dockerfile:
 
-\```dockerfile
+```dockerfile
 STOPSIGNAL SIGTERM
-\```
+```
 
 This pairs well with `tini` — `tini` receives the signal and forwards it
 correctly to your application. Some applications (e.g., certain Java or Node.js
 apps) respond better to `SIGINT` instead:
 
-\```dockerfile
+```dockerfile
 STOPSIGNAL SIGINT
-\```
+```
 
 ---
 
